@@ -24,9 +24,25 @@ async function bootstrap() {
     .setDescription('API for managing resumes')
     .setVersion('1.0')
     .addBearerAuth()
+    .addTag('auth', 'Authentication endpoints - Phase 1: Stable')
+    .addTag('resumes', 'Resume management endpoints - Phase 1: Stable')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, config, {
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
+  });
+
+  // Export OpenAPI JSON if GENERATE_OPENAPI env variable is set
+  if (process.env.GENERATE_OPENAPI === 'true') {
+    const fs = require('fs');
+    const path = require('path');
+    const jsonPath = path.join(__dirname, '..', 'openapi.json');
+    fs.writeFileSync(jsonPath, JSON.stringify(document, null, 2));
+    console.log('OpenAPI JSON generated successfully at openapi.json');
+    await app.close();
+    return;
+  }
+
   SwaggerModule.setup('api', app, document);
 
   await app.listen(process.env.PORT ?? 3000);

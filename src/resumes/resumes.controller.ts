@@ -20,7 +20,7 @@ import { ApiTags, ApiBearerAuth, ApiResponse, ApiOperation } from '@nestjs/swagg
 import type { Response } from 'express';
 import { PdfService } from './pdf.service';
 
-@ApiTags('resumes')
+@ApiTags('resumes', 'stable')
 @Controller('resumes')
 @UseGuards(AuthGuard('jwt'))
 @ApiBearerAuth()
@@ -31,7 +31,10 @@ export class ResumesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all resumes for authenticated user' })
+  @ApiOperation({
+    summary: 'Get all resumes for authenticated user',
+    description: 'Phase 1: Stable endpoint for retrieving user resumes'
+  })
   @ApiResponse({ status: 200, description: 'Returns all resumes' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Req() req) {
@@ -39,7 +42,10 @@ export class ResumesController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a specific resume' })
+  @ApiOperation({
+    summary: 'Get a specific resume',
+    description: 'Phase 1: Stable endpoint for retrieving a specific resume'
+  })
   @ApiResponse({ status: 200, description: 'Returns the resume' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
@@ -49,7 +55,10 @@ export class ResumesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new resume' })
+  @ApiOperation({
+    summary: 'Create a new resume',
+    description: 'Phase 1: Stable endpoint for creating a new resume'
+  })
   @ApiResponse({ status: 201, description: 'Resume created successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() createResumeDto: CreateResumeDto, @Req() req) {
@@ -57,7 +66,10 @@ export class ResumesController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Update a resume' })
+  @ApiOperation({
+    summary: 'Update a resume',
+    description: 'Phase 1: Stable endpoint for updating a resume'
+  })
   @ApiResponse({ status: 200, description: 'Resume updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
@@ -71,7 +83,10 @@ export class ResumesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a resume' })
+  @ApiOperation({
+    summary: 'Delete a resume',
+    description: 'Phase 1: Stable endpoint for deleting a resume'
+  })
   @ApiResponse({ status: 204, description: 'Resume deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Resume not found' })
@@ -80,7 +95,10 @@ export class ResumesController {
   }
 
   @Post(':id/export/pdf')
-  @ApiOperation({ summary: 'Export resume as PDF' })
+  @ApiOperation({
+    summary: 'Export resume as PDF',
+    description: 'Phase 1: Stable endpoint for exporting resume as PDF'
+  })
   @ApiResponse({ status: 200, description: 'PDF exported successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Resume not found' })

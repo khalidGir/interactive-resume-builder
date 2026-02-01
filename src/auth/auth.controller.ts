@@ -1,16 +1,19 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginUserDto } from '../dto/create-user.dto';
-import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiOperation, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 
-@ApiTags('auth')
+@ApiTags('auth', 'stable')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({
+    summary: 'Register a new user',
+    description: 'Phase 1: Stable endpoint for user registration'
+  })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 409, description: 'User already exists' })
@@ -20,7 +23,10 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login user' })
+  @ApiOperation({
+    summary: 'Login user',
+    description: 'Phase 1: Stable endpoint for user authentication'
+  })
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async signIn(@Body() loginUserDto: LoginUserDto) {
