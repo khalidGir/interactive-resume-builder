@@ -10,18 +10,25 @@ import {
   Req,
   HttpCode,
   HttpStatus,
+  Res,
+  Header,
 } from '@nestjs/common';
 import { ResumesService } from './resumes.service';
 import { CreateResumeDto, UpdateResumeDto } from '../dto/resume.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiResponse, ApiOperation } from '@nestjs/swagger';
+import type { Response } from 'express';
+import { PdfService } from './pdf.service';
 
 @ApiTags('resumes')
 @Controller('resumes')
 @UseGuards(AuthGuard('jwt'))
 @ApiBearerAuth()
 export class ResumesController {
-  constructor(private readonly resumesService: ResumesService) {}
+  constructor(
+    private readonly resumesService: ResumesService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all resumes for authenticated user' })
@@ -73,10 +80,31 @@ export class ResumesController {
   }
 
   @Post(':id/export/pdf')
-  @ApiOperation({ summary: 'Export resume as PDF (stub)' })
-  @ApiResponse({ status: 501, description: 'Not implemented yet' })
-  exportPdf(@Param('id') id: string, @Req() req) {
-    // This is a stub implementation - return 501 as requested
-    throw new Error('Not Implemented');
+  @ApiOperation({ summary: 'Export resume as PDF' })
+  @ApiResponse({ status: 200, description: 'PDF exported successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Resume not found' })
+  @Header('Content-Type', 'application/pdf')
+  async exportPdf(
+    @Param('id') id: string,
+    @Req() req,
+    @Res() res: Response,
+  ) {
+    // Get the resume data
+    const resume = await this.resumesService.findOne(id, req.user.userId);
+
+    // Generate HTML from the resume data
+    const htmlContent = await this.pdfService.generateResumeHtml(resume.data);
+
+    // Generate PDF from HTML
+    const pdfBuffer = await this.pdfService.generatePdfFromHtml(htmlContent);
+
+    // Send the PDF as a download
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resume-${id}.pdf"`,
+      'Content-Length': pdfBuffer.length,
+    });
+    res.send(pdfBuffer);
   }
 }

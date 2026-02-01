@@ -4,10 +4,11 @@ import { ResumesController } from './resumes.controller';
 import { Resume } from '../entities/resume.entity';
 import { User } from '../entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { PdfService } from './pdf.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Resume, User])],
   controllers: [ResumesController],
-  providers: [ResumesService],
+  providers: [ResumesService, PdfService],
 })
 export class ResumesModule {}
