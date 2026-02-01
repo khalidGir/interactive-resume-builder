@@ -1,0 +1,21 @@
+services:
+- type: web
+  name: interactive-resume-backend
+  env: node
+  region: oregon  # or your preferred region
+  buildCommand: npm install && npm run build
+  startCommand: npm run start:prod
+  envVars:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_URL
+    fromDatabase: resume-db
+  - key: JWT_SECRET
+    generateValue: true
+  - key: PORT
+    value: 10000
+
+databases:
+- name: resume-db
+  databaseName: resume_db
+  user: resume_user

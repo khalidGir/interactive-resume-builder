@@ -44,17 +44,18 @@ dist/
 .dockerignore
 
 # Backend-specific
-apps/backend/node_modules
-apps/backend/dist
+node_modules
+*.local
 
 # Frontend-specific
 apps/frontend/node_modules
 apps/frontend/.next
 apps/frontend/out
 
+# Backend-specific
+apps/backend/node_modules
+apps/backend/dist
+
 # Packages
 packages/*/node_modules
 packages/*/dist
-
-# Legacy files that should be ignored
-apps/frontend/node_modules/
