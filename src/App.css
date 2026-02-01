@@ -1,0 +1,123 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Additional styles for resume builder */
+.resume-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.form-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+/* Export button styles */
+.export-buttons {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.export-btn {
+  padding: 10px 20px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.pdf-btn {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.pdf-btn:hover {
+  background-color: #b71c1c;
+}
+
+.text-btn {
+  background-color: #1976d2;
+  color: white;
+}
+
+.text-btn:hover {
+  background-color: #0d47a1;
+}
+
+/* Resume preview styles */
+.resume-preview {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+}
+
+.resume-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2em;
+  color: #333;
+}
+
+.contact-info {
+  margin: 0 0 20px 0;
+  color: #666;
+}
+
+.resume-preview h2 {
+  border-bottom: 2px solid #333;
+  padding-bottom: 5px;
+  margin: 20px 0 10px 0;
+  color: #333;
+}
+
+.resume-preview h3 {
+  margin: 15px 0 5px 0;
+  color: #444;
+}
+
+.date-range {
+  font-style: italic;
+  color: #666;
+}
+
+.institution {
+  font-weight: bold;
+}
