@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{fullName}}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .name {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .contact-info {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .section-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        .experience-item, .education-item, .skill-item, .project-item, .language-item {
+            margin-bottom: 15px;
+        }
+        .job-title, .degree {
+            font-weight: bold;
+        }
+        .company, .institution {
+            font-style: italic;
+        }
+        .date-range {
+            float: right;
+            color: #666;
+        }
+        .clear {
+            clear: both;
+        }
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .skill-tag {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="name">{{profile.firstName}} {{profile.lastName}}</div>
+        <div class="job-title">{{profile.jobTitle}}</div>
+        <div class="contact-info">
+            <span>Email: {{profile.email}}</span>
+            <span>Phone: {{profile.phone}}</span>
+            <span>Location: {{profile.location}}</span>
+        </div>
+    </div>
+
+    {{#if profile.summary}}
+    <div class="summary">
+        <h2 class="section-title">Summary</h2>
+        <p>{{profile.summary}}</p>
+    </div>
+    {{/if}}
+
+    {{#if experiences.length}}
+    <div class="experiences">
+        <h2 class="section-title">Experience</h2>
+        {{#each experiences}}
+        <div class="experience-item">
+            <div class="job-title">{{this.position}}</div>
+            <div class="company">{{this.company}} <span class="date-range">{{this.startDate}} - {{#if this.currentlyWorking}}Present{{else}}{{this.endDate}}{{/if}}</span></div>
+            <div class="clear"></div>
+            <p>{{this.description}}</p>
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if education.length}}
+    <div class="education">
+        <h2 class="section-title">Education</h2>
+        {{#each education}}
+        <div class="education-item">
+            <div class="degree">{{this.degree}} in {{this.fieldOfStudy}}</div>
+            <div class="institution">{{this.institution}} <span class="date-range">{{this.startDate}} - {{this.endDate}}</span></div>
+            <div class="clear"></div>
+            {{#if this.gpa}}
+            <p>GPA: {{this.gpa}}</p>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if skills.length}}
+    <div class="skills">
+        <h2 class="section-title">Skills</h2>
+        <div class="skills-container">
+            {{#each skills}}
+            <div class="skill-tag">{{this.name}} {{#if this.level}}({{this.level}}){{/if}}</div>
+            {{/each}}
+        </div>
+    </div>
+    {{/if}}
+
+    {{#if projects.length}}
+    <div class="projects">
+        <h2 class="section-title">Projects</h2>
+        {{#each projects}}
+        <div class="project-item">
+            <div class="project-title">{{this.title}}</div>
+            <p>{{this.description}}</p>
+            {{#if this.link}}<p><a href="{{this.link}}">{{this.link}}</a></p>{{/if}}
+            {{#if this.technologies.length}}
+            <p>Technologies: {{#each this.technologies}}{{#unless @first}}, {{/unless}}{{this}}{{/each}}</p>
+            {{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+
+    {{#if languages.length}}
+    <div class="languages">
+        <h2 class="section-title">Languages</h2>
+        {{#each languages}}
+        <div class="language-item">
+            <span class="language-name">{{this.language}}</span>
+            {{#if this.proficiency}}<span> ({{this.proficiency}})</span>{{/if}}
+        </div>
+        {{/each}}
+    </div>
+    {{/if}}
+</body>
+</html>
