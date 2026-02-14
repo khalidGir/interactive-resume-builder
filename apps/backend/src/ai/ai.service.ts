@@ -1,137 +1,310 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, ForbiddenException, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
+import { HuggingFaceService } from './huggingface.service';
+import { User, UserPlan } from '../entities/user.entity';
+import { AIUsage, AIFeature } from '../entities/ai-usage.entity';
+import {
+  ImproveSummaryDto,
+  ImproveBulletDto,
+  SuggestSkillsDto,
+  GenerateSummaryDto,
+  ImproveSummaryResponseDto,
+  ImproveBulletResponseDto,
+  SuggestSkillsResponseDto,
+  GenerateSummaryResponseDto,
+  AIUsageResponseDto,
+} from '../dto/ai.dto';
 
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
+  private readonly FREE_TIER_LIMIT = 5;
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private huggingFaceService: HuggingFaceService,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @InjectRepository(AIUsage)
+    private aiUsageRepository: Repository<AIUsage>,
+  ) {}
 
-  /**
-   * Improves a resume bullet point using AI
-   * @param text The original bullet point text
-   * @param role Optional job role context
-   * @returns Improved bullet point text
-   */
-  async improveBulletPoint(text: string, role?: string): Promise<string> {
-    // Validate input
-    if (!text || text.trim().length === 0) {
-      throw new Error('Bullet point text is required');
-    }
+  async improveSummary(
+    userId: string,
+    dto: ImproveSummaryDto,
+  ): Promise<ImproveSummaryResponseDto> {
+    // Check rate limit
+    await this.checkAndTrackUsage(userId, 'improve_summary', dto.summary);
 
-    // In a real implementation, this would call an open-source LLM API
-    // For now, we'll use a cost-effective approach with a well-crafted prompt
-    // that could work with local LLMs like Llama in the future
-    const improvedText = await this.callLocalLLMForBulletImprovement(text, role);
+    // TODO: Implement actual AI improvement logic
+    // For now, return mock response
+    const improved = `Experienced ${dto.jobTitle || 'professional'} with a proven track record of delivering exceptional results. ${dto.summary}`;
 
-    return improvedText;
+    return {
+      suggestions: [
+        improved,
+        `Results-driven ${dto.jobTitle || 'professional'} with expertise in delivering high-impact solutions.`,
+        `Dynamic ${dto.jobTitle || 'professional'} recognized for driving innovation and achieving measurable outcomes.`,
+      ],
+      improved,
+      originalLength: dto.summary.length,
+      improvedLength: improved.length,
+    };
   }
 
-  /**
-   * Calls a local LLM for bullet point improvement
-   * This is structured to easily connect to an actual LLM API in the future
-   */
-  private async callLocalLLMForBulletImprovement(text: string, role?: string): Promise<string> {
-    // This is a placeholder implementation that simulates calling a local LLM
-    // In a real implementation, you would connect to a local LLM API like Ollama,
-    // Hugging Face transformers, or similar open-source solution
+  async improveBullet(
+    userId: string,
+    dto: ImproveBulletDto,
+  ): Promise<ImproveBulletResponseDto> {
+    // Check rate limit
+    await this.checkAndTrackUsage(userId, 'improve_bullet', dto.bullet);
 
-    // Create a prompt for the LLM
-    const prompt = this.createBulletImprovementPrompt(text, role);
+    // Use the HuggingFace service to improve the bullet point
+    const improvedText = await this.huggingFaceService.improveBulletPoint(
+      dto.bullet,
+    );
 
-    // For now, we'll simulate the response with a cost-conscious approach
-    // In a real implementation, this would call the actual LLM
-    return this.simulateLLMResponse(prompt);
+    // Calculate metrics
+    const hasActionVerb = this.hasActionVerb(improvedText);
+    const hasMetrics = this.hasMetrics(improvedText);
+    const score = this.calculateBulletScore(
+      improvedText,
+      hasActionVerb,
+      hasMetrics,
+    );
+
+    return {
+      suggestions: [improvedText],
+      improved: improvedText,
+      metrics: {
+        hasActionVerb,
+        hasMetrics,
+        score,
+      },
+    };
   }
 
-  /**
-   * Creates a prompt for bullet point improvement
-   */
-  private createBulletImprovementPrompt(text: string, role?: string): string {
-    let prompt = `Improve this resume bullet point to be more impactful, specific, and quantifiable. `;
+  async suggestSkills(
+    userId: string,
+    dto: SuggestSkillsDto,
+  ): Promise<SuggestSkillsResponseDto> {
+    // Check rate limit
+    await this.checkAndTrackUsage(userId, 'suggest_skills', dto.jobTitle);
 
-    if (role) {
-      prompt += `Consider the role of "${role}" when improving. `;
-    }
+    // TODO: Implement actual AI suggestion logic
+    // Mock suggestions based on job title
+    const skillMap: Record<string, string[]> = {
+      'software engineer': [
+        'JavaScript',
+        'TypeScript',
+        'React',
+        'Node.js',
+        'Python',
+        'AWS',
+        'Docker',
+        'Git',
+      ],
+      'data scientist': [
+        'Python',
+        'R',
+        'SQL',
+        'Machine Learning',
+        'TensorFlow',
+        'Pandas',
+        'NumPy',
+        'Data Visualization',
+      ],
+      'product manager': [
+        'Agile',
+        'Scrum',
+        'JIRA',
+        'Data Analysis',
+        'User Research',
+        'Roadmapping',
+        'Stakeholder Management',
+      ],
+      designer: [
+        'Figma',
+        'Adobe Creative Suite',
+        'UI/UX Design',
+        'Prototyping',
+        'User Research',
+        'Design Systems',
+      ],
+    };
 
-    prompt += `Make it start with a strong action verb and focus on achievements and outcomes. `;
-    prompt += `Keep it concise but powerful. Original text: "${text}"`;
-
-    return prompt;
-  }
-
-  /**
-   * Simulates LLM response (in a real app, this would call the actual LLM)
-   */
-  private simulateLLMResponse(prompt: string): string {
-    // This is a cost-conscious simulation that follows best practices for resume writing
-    // In a real implementation, this would be replaced with an actual LLM call
-
-    // Extract the original text from the prompt
-    const originalText = prompt.match(/Original text: "(.*)"/)?.[1] || "";
-
-    // Apply transformations that follow resume best practices
-    let improvedText = originalText.trim();
-
-    // Capitalize first letter if needed
-    if (improvedText && improvedText[0]) {
-      improvedText = improvedText.charAt(0).toUpperCase() + improvedText.slice(1);
-    }
-
-    // Remove trailing period if present (standard for resume bullets)
-    if (improvedText.endsWith('.')) {
-      improvedText = improvedText.slice(0, -1);
-    }
-
-    // Add a strong action verb if missing
-    if (!this.startsWithActionVerb(improvedText)) {
-      const actionVerbs = [
-        'Spearheaded', 'Drove', 'Optimized', 'Engineered', 'Delivered',
-        'Implemented', 'Launched', 'Managed', 'Developed', 'Enhanced'
-      ];
-      const randomVerb = actionVerbs[Math.floor(Math.random() * actionVerbs.length)];
-      improvedText = `${randomVerb} ${improvedText}`;
-    }
-
-    // Add impact if possible (simulated)
-    if (!improvedText.includes('%') && !improvedText.includes('increased') &&
-        !improvedText.includes('reduced') && !improvedText.includes('improved')) {
-      // Add a generic impact statement
-      const impacts = [
-        ', resulting in measurable improvements',
-        ', leading to enhanced efficiency',
-        ', contributing to team success',
-        ', achieving significant results'
-      ];
-      const randomImpact = impacts[Math.floor(Math.random() * impacts.length)];
-      improvedText += randomImpact;
-    }
-
-    return improvedText;
-  }
-
-  /**
-   * Checks if the text starts with a common action verb
-   */
-  private startsWithActionVerb(text: string): boolean {
-    const actionVerbs = [
-      'Achieved', 'Built', 'Collaborated', 'Communicated', 'Completed',
-      'Conceptualized', 'Coordinated', 'Created', 'Defined', 'Delivered',
-      'Designed', 'Developed', 'Directed', 'Enhanced', 'Established',
-      'Evaluated', 'Executed', 'Facilitated', 'Generated', 'Identified',
-      'Implemented', 'Improved', 'Increased', 'Initiated', 'Innovated',
-      'Integrated', 'Launched', 'Led', 'Maintained', 'Managed',
-      'Maximized', 'Minimized', 'Negotiated', 'Operated', 'Organized',
-      'Originated', 'Overhauled', 'Participated', 'Performed', 'Planned',
-      'Processed', 'Produced', 'Programmed', 'Projected', 'Provided',
-      'Reduced', 'Recommended', 'Represented', 'Resolved', 'Scheduled',
-      'Selected', 'Sold', 'Solved', 'Streamlined', 'Supervised',
-      'Supported', 'Synthesized', 'Tracked', 'Trained', 'Utilized',
-      'Verified', 'Won', 'Yielded', 'Spearheaded', 'Drove', 'Optimized',
-      'Engineered', 'Delivered'
+    const normalizedTitle = dto.jobTitle.toLowerCase();
+    const suggested = skillMap[normalizedTitle] || [
+      'Communication',
+      'Problem Solving',
+      'Teamwork',
+      'Time Management',
+      'Leadership',
     ];
 
-    const firstWord = text.split(' ')[0]?.toLowerCase();
-    return actionVerbs.some(verb => verb.toLowerCase() === firstWord);
+    return {
+      suggested: suggested.slice(0, 5),
+      trending: suggested.slice(5, 8),
+      basedOn: `Based on current industry trends and requirements for ${dto.jobTitle} positions`,
+    };
+  }
+
+  async generateSummary(
+    userId: string,
+    dto: GenerateSummaryDto,
+  ): Promise<GenerateSummaryResponseDto> {
+    // Check rate limit
+    await this.checkAndTrackUsage(
+      userId,
+      'generate_summary',
+      JSON.stringify(dto.experiences),
+    );
+
+    // TODO: Implement actual AI generation logic
+    const summary = `Experienced ${dto.jobTitle} with ${dto.experiences.length} years of professional experience. Proven track record of delivering results and driving innovation.`;
+
+    return {
+      summary,
+      alternatives: [
+        `Results-driven ${dto.jobTitle} with extensive experience in delivering impactful solutions.`,
+        `Dynamic ${dto.jobTitle} recognized for excellence and innovation in fast-paced environments.`,
+      ],
+      keyHighlights: ['Leadership', 'Innovation', 'Results-driven'],
+    };
+  }
+
+  async getUsage(userId: string): Promise<AIUsageResponseDto> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    // Pro users have unlimited access
+    if (user && user.plan !== UserPlan.Free) {
+      return {
+        remaining: -1, // Unlimited
+        total: -1,
+        usedThisMonth: 0,
+        resetsAt: this.getNextResetDate(),
+      };
+    }
+
+    // Count usage for free users
+    const startOfMonth = this.getStartOfMonth();
+    const usedThisMonth = await this.aiUsageRepository.count({
+      where: {
+        userId,
+        createdAt: MoreThan(startOfMonth),
+      },
+    });
+
+    return {
+      remaining: Math.max(0, this.FREE_TIER_LIMIT - usedThisMonth),
+      total: this.FREE_TIER_LIMIT,
+      usedThisMonth,
+      resetsAt: this.getNextResetDate(),
+    };
+  }
+
+  private async checkAndTrackUsage(
+    userId: string,
+    feature: AIFeature,
+    input: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    // Pro users have unlimited access
+    if (user && user.plan !== UserPlan.Free) {
+      // Track usage but don't limit
+      await this.trackUsage(userId, feature, input, 'unlimited');
+      return;
+    }
+
+    // Check free tier limit
+    const usage = await this.getUsage(userId);
+    if (usage.remaining <= 0) {
+      throw new ForbiddenException(
+        'You have reached your monthly AI usage limit. Upgrade to Pro for unlimited AI features.',
+      );
+    }
+
+    // Track usage
+    await this.trackUsage(userId, feature, input, 'limited');
+  }
+
+  private async trackUsage(
+    userId: string,
+    feature: AIFeature,
+    input: string,
+    type: string,
+  ): Promise<void> {
+    const usage = new AIUsage();
+    usage.userId = userId;
+    usage.feature = feature;
+    usage.input = input.substring(0, 1000); // Limit input size
+    usage.output = type; // Simplified output tracking
+    usage.tokensUsed = 0; // Would be set by actual AI service
+
+    await this.aiUsageRepository.save(usage);
+  }
+
+  private getStartOfMonth(): Date {
+    const date = new Date();
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  private getNextResetDate(): Date {
+    const date = new Date();
+    date.setMonth(date.getMonth() + 1);
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  private hasActionVerb(text: string): boolean {
+    const actionVerbs = [
+      'achieved',
+      'improved',
+      'developed',
+      'led',
+      'managed',
+      'created',
+      'implemented',
+      'increased',
+      'reduced',
+      'spearheaded',
+      'launched',
+      'designed',
+      'built',
+      'delivered',
+      'optimized',
+      'streamlined',
+      'coordinated',
+      'supervised',
+    ];
+    const lowerText = text.toLowerCase();
+    return actionVerbs.some((verb) => lowerText.includes(verb));
+  }
+
+  private hasMetrics(text: string): boolean {
+    // Check for numbers, percentages, or specific metrics
+    return /\d+%|\$\d+|\d+\s*(million|thousand|k|m|hours|days|months|years)/i.test(
+      text,
+    );
+  }
+
+  private calculateBulletScore(
+    text: string,
+    hasActionVerb: boolean,
+    hasMetrics: boolean,
+  ): number {
+    let score = 50; // Base score
+
+    if (hasActionVerb) score += 20;
+    if (hasMetrics) score += 20;
+    if (text.length > 50 && text.length < 150) score += 10; // Optimal length
+
+    return Math.min(100, score);
   }
 }

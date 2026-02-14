@@ -1,62 +1,105 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiResponse, ApiOperation } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AiService } from './ai.service';
-import { IsString, IsOptional } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import {
+  ImproveSummaryDto,
+  ImproveBulletDto,
+  SuggestSkillsDto,
+  GenerateSummaryDto,
+  ImproveSummaryResponseDto,
+  ImproveBulletResponseDto,
+  SuggestSkillsResponseDto,
+  GenerateSummaryResponseDto,
+  AIUsageResponseDto,
+} from '../dto/ai.dto';
 
-export class ImproveBulletDto {
-  @ApiProperty({
-    description: 'The bullet point text to improve',
-    example: 'Worked on a team to build a new feature'
-  })
-  @IsString()
-  text: string;
-
-  @ApiProperty({
-    description: 'Optional job role context for improvement',
-    example: 'Software Engineer',
-    required: false
-  })
-  @IsOptional()
-  @IsString()
-  role?: string;
-}
-
-export class ImproveBulletResponseDto {
-  @ApiProperty({
-    description: 'The improved bullet point text',
-    example: 'Spearheaded development of a new feature that increased user engagement by 25%'
-  })
-  improvedText: string;
-}
-
-@ApiTags('ai', 'experimental')
-@Controller('ai')
+@ApiTags('ai')
+@Controller('api/ai')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
+  @Post('improve-summary')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Improve professional summary' })
+  @ApiResponse({
+    status: 200,
+    description: 'Summary improved successfully',
+    type: ImproveSummaryResponseDto,
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async improveSummary(
+    @CurrentUser() userId: string,
+    @Body() dto: ImproveSummaryDto,
+  ): Promise<ImproveSummaryResponseDto> {
+    return this.aiService.improveSummary(userId, dto);
+  }
+
   @Post('improve-bullet')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Improve a resume bullet point',
-    description: 'Opt-in AI feature to enhance a single resume bullet point. User must manually apply the result.'
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Improve a resume bullet point' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bullet point improved successfully',
+    type: ImproveBulletResponseDto,
   })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Returns the improved bullet point text',
-    type: ImproveBulletResponseDto
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async improveBullet(
-    @Body() improveBulletDto: ImproveBulletDto
+    @CurrentUser() userId: string,
+    @Body() dto: ImproveBulletDto,
   ): Promise<ImproveBulletResponseDto> {
-    const { text, role } = improveBulletDto;
-    
-    const improvedText = await this.aiService.improveBulletPoint(text, role);
-    
-    return { improvedText };
+    return this.aiService.improveBullet(userId, dto);
+  }
+
+  @Post('suggest-skills')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Suggest skills for a job title' })
+  @ApiResponse({
+    status: 200,
+    description: 'Skills suggested successfully',
+    type: SuggestSkillsResponseDto,
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async suggestSkills(
+    @CurrentUser() userId: string,
+    @Body() dto: SuggestSkillsDto,
+  ): Promise<SuggestSkillsResponseDto> {
+    return this.aiService.suggestSkills(userId, dto);
+  }
+
+  @Post('generate-summary')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({ summary: 'Generate professional summary from experience' })
+  @ApiResponse({
+    status: 200,
+    description: 'Summary generated successfully',
+    type: GenerateSummaryResponseDto,
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  async generateSummary(
+    @CurrentUser() userId: string,
+    @Body() dto: GenerateSummaryDto,
+  ): Promise<GenerateSummaryResponseDto> {
+    return this.aiService.generateSummary(userId, dto);
+  }
+
+  @Get('usage')
+  @ApiOperation({ summary: 'Get AI usage for current user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Usage retrieved successfully',
+    type: AIUsageResponseDto,
+  })
+  async getUsage(@CurrentUser() userId: string): Promise<AIUsageResponseDto> {
+    return this.aiService.getUsage(userId);
   }
 }

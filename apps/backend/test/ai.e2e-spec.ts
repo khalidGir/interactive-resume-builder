@@ -20,7 +20,7 @@ describe('AiController (e2e)', () => {
       .post('/ai/improve-bullet')
       .send({
         text: 'worked on a team to build a new feature',
-        role: 'Software Engineer'
+        role: 'Software Engineer',
       })
       .expect(401); // Expecting 401 because we didn't provide authentication
 

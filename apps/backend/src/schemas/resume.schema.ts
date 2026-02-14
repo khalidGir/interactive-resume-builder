@@ -51,7 +51,10 @@ export const resumeSchema = {
         type: 'object',
         properties: {
           name: { type: 'string' },
-          level: { type: 'string', enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'] },
+          level: {
+            type: 'string',
+            enum: ['Beginner', 'Intermediate', 'Advanced', 'Expert'],
+          },
         },
         required: ['name'],
       },
@@ -78,7 +81,10 @@ export const resumeSchema = {
         type: 'object',
         properties: {
           language: { type: 'string' },
-          proficiency: { type: 'string', enum: ['Elementary', 'Limited', 'Professional', 'Native'] },
+          proficiency: {
+            type: 'string',
+            enum: ['Elementary', 'Limited', 'Professional', 'Native'],
+          },
         },
         required: ['language', 'proficiency'],
       },

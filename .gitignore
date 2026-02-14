@@ -58,3 +58,4 @@ packages/*/dist
 
 # Legacy files that should be ignored
 apps/frontend/node_modules/
+.aider*
