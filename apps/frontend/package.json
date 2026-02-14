@@ -28,9 +28,9 @@
     "vite": "^4.5.14"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "node api.js && vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "vite"
+    "start": "node api.js && vite"
   }
 }
